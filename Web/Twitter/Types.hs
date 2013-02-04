@@ -82,6 +82,7 @@ data Status =
   , statusEntities      :: Maybe Entities
   , statusInReplyTo     :: Maybe StatusId
   , statusInReplyToUser :: Maybe UserId
+  , statusInReplyToScreenName :: Maybe Text -- Easier for DJBs code than the UserId field
   , statusFavorite      :: Maybe Bool
   , statusRetweetCount  :: Maybe Integer
   , statusUser          :: User
@@ -97,6 +98,7 @@ instance FromJSON Status where
            <*> o .:? "entities"
            <*> o .:? "in_reply_to_status_id"
            <*> o .:? "in_reply_to_user_id"
+           <*> o .:? "in_reply_to_screen_name"
            <*> o .:? "favorited"
            <*> o .:? "retweet_count"
            <*> o .:  "user"
