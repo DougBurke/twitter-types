@@ -1,5 +1,7 @@
 {-# LANGUAGE OverloadedStrings, DeriveDataTypeable #-}
 
+-- TODO: check against https://dev.twitter.com/docs/platform-objects
+
 module Web.Twitter.Types
        ( DateString
        , UserId
@@ -14,6 +16,7 @@ module Web.Twitter.Types
        , SearchStatus(..)
        , RetweetedStatus(..)
        , DirectMessage(..)
+       , FilterLevel(..)
        , EventTarget(..)
        , Event(..)
        , Delete(..)
@@ -24,6 +27,10 @@ module Web.Twitter.Types
        , HashTagEntity(..)
        , UserEntity(..)
        , URLEntity(..)
+       , SymbolEntity(..)
+       , MediaEntity(..)
+       , MediaSize(..)
+       , MediaTag(..)
        , checkError
        )
        where
@@ -35,13 +42,16 @@ import Data.ByteString (ByteString)
 import Control.Applicative
 import Control.Monad
 
-type DateString   = String
+type DateString   = Text
 type UserId       = Integer
 type Friends      = [UserId]
 type URIString    = ByteString
 type UserName     = Text
 type StatusId     = Integer
-type LanguageCode = String
+
+-- | Looks like Twitter are using BCP47 - http://tools.ietf.org/html/bcp47 - but
+--   a present too lazy to wrap this up into a type.
+type LanguageCode = Text
 
 data StreamingAPI = SStatus Status
                   | SRetweetedStatus RetweetedStatus
@@ -78,6 +88,8 @@ data Status =
   , statusId            :: StatusId
   , statusText          :: Text
   , statusSource        :: Text
+  , statusLanguage      :: LanguageCode
+  , statusFilterLevel   :: FilterLevel
   , statusTruncated     :: Bool
   , statusEntities      :: Maybe Entities
   , statusInReplyTo     :: Maybe StatusId
@@ -85,8 +97,139 @@ data Status =
   , statusInReplyToScreenName :: Maybe Text -- Easier for DJBs code than the UserId field
   , statusFavorite      :: Maybe Bool
   , statusRetweetCount  :: Maybe Integer
+  , statusSensitiveLink :: Maybe Bool
   , statusUser          :: User
   } deriving (Show, Eq)
+
+{-
+
+{
+"created_at":"Fri Jul 12 18:51:34 +0000 2013",
+"id":355761366654660608,"id_str":"355761366654660608",
+"text":"RT @TheComedyJokes: According to Astronomy, when you wish upon a star, you're actually a few million years too late. That star is dead. Jus\u2026",
+"source":"\u003ca href=\"http:\/\/twitter.com\/download\/android\" rel=\"nofollow\"\u003eTwitter for Android\u003c\/a\u003e",
+"truncated":false,
+"in_reply_to_status_id":null,
+"in_reply_to_status_id_str":null,
+"in_reply_to_user_id":null,
+"in_reply_to_user_id_str":null,
+"in_reply_to_screen_name":null,
+"user":{
+  "id":427074862,
+  "id_str":"427074862",
+  "name":"Anna Graham \u2730",
+  "screen_name":"anagram23",
+  "location":"",
+  "url":null,
+  "description":"AnnaCarroll. 20 years young. Parker \u2661. I love to laugh and have a good time. Follow me. \u270c",
+  "protected":false,
+  "followers_count":558,
+  "friends_count":516,
+  "listed_count":0,
+  "created_at":"Sat Dec 03 02:33:36 +0000 2011",
+  "favourites_count":343,
+  "utc_offset":null,
+  "time_zone":null,
+  "geo_enabled":false,
+  "verified":false,
+  "statuses_count":3202,
+  "lang":"en",
+  "contributors_enabled":false,
+  "is_translator":false,
+  "profile_background_color":"BD1CD6",
+  "profile_background_image_url":"http:\/\/a0.twimg.com\/images\/themes\/theme10\/bg.gif",
+  "profile_background_image_url_https":"https:\/\/si0.twimg.com\/images\/themes\/theme10\/bg.gif",
+  "profile_background_tile":true,
+  "profile_image_url":"http:\/\/a0.twimg.com\/profile_images\/3738122103\/1c778f19083dca22c359980429fbfd5d_normal.jpeg",
+  "profile_image_url_https":"https:\/\/si0.twimg.com\/profile_images\/3738122103\/1c778f19083dca22c359980429fbfd5d_normal.jpeg",
+  "profile_banner_url":"https:\/\/pbs.twimg.com\/profile_banners\/427074862\/1348027745",
+  "profile_link_color":"FF0000",
+  "profile_sidebar_border_color":"65B0DA",
+  "profile_sidebar_fill_color":"7AC3EE",
+  "profile_text_color":"3D1957",
+  "profile_use_background_image":true,
+  "default_profile":false,
+  "default_profile_image":false,
+  "following":null,
+  "follow_request_sent":null,
+  "notifications":null
+},
+"geo":null,
+"coordinates":null,
+"place":null,
+"contributors":null,
+"retweeted_status":{
+  "created_at":"Fri Jul 12 18:00:17 +0000 2013",
+  "id":355748460865134596,
+  "id_str":"355748460865134596",
+  "text":"According to Astronomy, when you wish upon a star, you're actually a few million years too late. That star is dead. Just like your dreams.",
+  "source":"\u003ca href=\"http:\/\/bufferapp.com\" rel=\"nofollow\"\u003eBuffer\u003c\/a\u003e",
+  "truncated":false,
+  "in_reply_to_status_id":null,
+  "in_reply_to_status_id_str":null,
+  "in_reply_to_user_id":null,
+  "in_reply_to_user_id_str":null,
+  "in_reply_to_screen_name":null,
+  "user":{
+    "id":269661382,
+    "id_str":"269661382",
+    "name":"Comedy Tweets",
+    "screen_name":"TheComedyJokes",
+    "location":"Get a Retweet on this account!",
+    "url":"http:\/\/TweetPeddler.com\/thecomedyjokes",
+    "description":"Tweeting quotes, jokes, advice, & facts that relate to your everyday life. ( TwitAdvertising@yahoo.com )",
+    "protected":false,
+    "followers_count":1325645,
+    "friends_count":82,
+    "listed_count":3748,
+    "created_at":"Mon Mar 21 06:43:12 +0000 2011",
+    "favourites_count":1017,
+    "utc_offset":-18000,
+    "time_zone":"Eastern Time (US & Canada)",
+    "geo_enabled":false,
+    "verified":false,
+    "statuses_count":28192,
+    "lang":"en",
+    "contributors_enabled":false,
+    "is_translator":false,
+    "profile_background_color":"709397",
+    "profile_background_image_url":"http:\/\/a0.twimg.com\/profile_background_images\/552746752\/gray_sand.png",
+    "profile_background_image_url_https":"https:\/\/si0.twimg.com\/profile_background_images\/552746752\/gray_sand.png",
+    "profile_background_tile":true,
+    "profile_image_url":"http:\/\/a0.twimg.com\/profile_images\/2187551242\/dancepeter__1__normal.gif",
+    "profile_image_url_https":"https:\/\/si0.twimg.com\/profile_images\/2187551242\/dancepeter__1__normal.gif",
+    "profile_banner_url":"https:\/\/pbs.twimg.com\/profile_banners\/269661382\/1348002051",
+    "profile_link_color":"FF3300",
+    "profile_sidebar_border_color":"FFFFFF",
+    "profile_sidebar_fill_color":"A0C5C7",
+    "profile_text_color":"333333",
+    "profile_use_background_image":true,
+    "default_profile":false,
+    "default_profile_image":false,
+    "following":null,
+    "follow_request_sent":null,
+    "notifications":null
+  },
+  "geo":null,
+  "coordinates":null,
+  "place":null,
+  "contributors":null,
+  "retweet_count":194,
+  "favorite_count":77,
+  "entities":{"hashtags":[],"symbols":[],"urls":[],"user_mentions":[]},
+  "favorited":false,
+  "retweeted":false,
+  "lang":"en"
+}
+"retweet_count":0,
+"favorite_count":0,
+"entities":{"hashtags":[],"symbols":[],"urls":[],"user_mentions":[{"screen_name":"TheComedyJokes","name":"Comedy Tweets","id":269661382,"id_str":"269661382","indices":[3,18]}]},
+"favorited":false,
+"retweeted":false,
+"filter_level":"medium",
+"lang":"en"}
+
+-}
 
 instance FromJSON Status where
   parseJSON (Object o) = checkError o >>
@@ -94,6 +237,8 @@ instance FromJSON Status where
            <*> o .:  "id"
            <*> o .:  "text"
            <*> o .:  "source"
+           <*> o .:  "lang"
+           <*> o .:  "filter_level"
            <*> o .:  "truncated"
            <*> o .:? "entities"
            <*> o .:? "in_reply_to_status_id"
@@ -101,6 +246,7 @@ instance FromJSON Status where
            <*> o .:? "in_reply_to_screen_name"
            <*> o .:? "favorited"
            <*> o .:? "retweet_count"
+           <*> o .:? "possibly_sensitive"
            <*> o .:  "user"
   parseJSON _ = mzero
 
@@ -155,6 +301,7 @@ data RetweetedStatus =
   , rsId              :: StatusId
   , rsText            :: Text
   , rsSource          :: Text
+  , rsLanguage        :: LanguageCode
   , rsTruncated       :: Bool
   , rsEntities        :: Maybe Entities
   , rsUser            :: User
@@ -167,6 +314,7 @@ instance FromJSON RetweetedStatus where
                     <*> o .:  "id"
                     <*> o .:  "text"
                     <*> o .:  "source"
+                    <*> o .:  "lang"
                     <*> o .:  "truncated"
                     <*> o .:? "entities"
                     <*> o .:  "user"
@@ -197,6 +345,19 @@ instance FromJSON DirectMessage where
                   <*> o .:  "recipient"
                   <*> o .:  "recipient_id"
                   <*> o .:  "sender_id"
+  parseJSON _ = mzero
+
+-- | From https://dev.twitter.com/blog/introducing-new-metadata-for-tweets
+data FilterLevel = FLNone | FLLow | FLMedium | FLHigh
+                                       deriving (Show, Eq)
+
+instance FromJSON FilterLevel where
+  parseJSON (String t) = case t of
+    "none" -> return FLNone
+    "low" -> return FLLow
+    "medium" -> return FLMedium
+    "high" -> return FLHigh
+    _ -> mzero
   parseJSON _ = mzero
 
 data EventType = Favorite | Unfavorite
@@ -261,6 +422,11 @@ data User =
   , userTweets          :: Maybe Int
   , userLangCode        :: Maybe LanguageCode
   , userCreatedAt       :: Maybe DateString
+  , userVerified        :: Bool
+  , userHasContributors :: Bool
+  , userGeoEnabled      :: Bool
+  , userUTCOffset       :: Maybe Int
+  , userTimeZone        :: Maybe Text
   } deriving (Show, Eq)
 
 instance FromJSON User where
@@ -278,6 +444,11 @@ instance FromJSON User where
          <*> o .:? "statuses_count"
          <*> o .:? "lang"
          <*> o .:? "created_at"
+         <*> o .:  "verified"
+         <*> o .:  "contributors_enabled"
+         <*> o .:  "get_enabled"
+         <*> o .:? "utc_offset"
+         <*> o .:? "time_zone"
   parseJSON _ = mzero
 
 data List =
@@ -312,6 +483,16 @@ instance FromJSON HashTagEntity where
     HashTagEntity <$> o .: "text"
   parseJSON _ = mzero
 
+data SymbolEntity =
+  SymbolEntity
+  { symbolText :: Text -- ^ The symbol text
+  } deriving (Show, Eq)
+
+instance FromJSON SymbolEntity where
+  parseJSON (Object o) =
+    SymbolEntity <$> o .: "text"
+  parseJSON _ = mzero
+
 -- | The 'UserEntity' is just a wrapper around 'User' which is
 --   a bit wasteful, and should probably be replaced by just
 --   storing the id, name and screen name here.
@@ -335,12 +516,62 @@ instance FromJSON URLEntity where
               <*> o .:  "display_url"
   parseJSON _ = mzero
 
+data MediaSize =
+  MediaSize
+  { msWidth :: Int
+  , msHeight :: Int
+  , msResize :: Text
+  } deriving (Show, Eq)
+
+instance FromJSON MediaSize where
+  parseJSON (Object o) =
+    MediaSize <$> o .: "w"
+              <*> o .: "h"
+              <*> o .: "resize"
+  parseJSON _ = mzero
+
+data MediaTag = MTThumb | MTLarge | MTMedium | MTSmall
+                                               deriving (Show, Eq)
+
+instance FromJSON MediaTag where
+  parseJSON (String s) = case s of
+    "thumb" -> return MTThumb
+    "large" -> return MTLarge
+    "medium" -> return MTMedium
+    "small" -> return MTSmall
+    _ -> mzero
+  parseJSON _ = mzero
+
+data MediaEntity =
+  MediaEntity
+  { meId      :: Integer   -- ^ ID of the media entity
+  , meType    :: Text      -- ^ type of the entity
+  , meURL     :: (URIString, URIString)  -- ^ Corresponds to the media_url, media_url_https fields
+  , meExpandedURL :: URIString -- ^ Corresponds to expanded_url
+  , meDisplayURL :: Text -- ^ shortened form of the expanded URL (corresponds to display_url)
+  , meTweetText :: Text -- ^ text used in the actual tweet (corresponds to url)
+  , msSizes :: [(MediaTag, MediaSize)] 
+  } deriving (Show, Eq)
+
+instance FromJSON MediaEntity where
+  parseJSON (Object o) =
+    MediaEntity <$> o .: "id"
+                <*> o .: "type"
+                <*> ((,) <$> o .: "media_url" <*> o .: "media_url_https")
+                <*> o .: "expanded_url"
+                <*> o .: "display_url"
+                <*> o .: "url"
+                <*> o .: "sizes"
+  parseJSON _ = mzero
+  
 -- | Entity handling.
 data Entities =
   Entities
   { enHashTags     :: [Entity HashTagEntity]
   , enUserMentions :: [Entity UserEntity]
   , enURLs         :: [Entity URLEntity]
+  , enSymbols      :: [Entity SymbolEntity]
+  , enMedia        :: [Entity MediaEntity]
   } deriving (Show, Eq)
 
 instance FromJSON Entities where
@@ -348,6 +579,8 @@ instance FromJSON Entities where
     Entities <$> o .:  "hashtags"
              <*> o .:  "user_mentions"
              <*> o .:  "urls"
+             <*> o .:  "symbols"
+             <*> o .:  "media"
   parseJSON _ = mzero
 
 -- | The character positions the Entity was extracted from
