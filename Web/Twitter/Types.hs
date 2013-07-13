@@ -30,14 +30,16 @@ module Web.Twitter.Types
        , SymbolEntity(..)
        , MediaEntity(..)
        , MediaSize(..)
-       , MediaTag(..)
+       -- , MediaTag(..)
        , checkError
        )
        where
 
+import qualified Data.Map as M
+
 import Data.Aeson
 import Data.Aeson.Types (Parser)
-import Data.Text (Text)
+import Data.Text (Text, unpack)
 import Data.ByteString (ByteString)
 import Control.Applicative
 import Control.Monad
@@ -100,136 +102,6 @@ data Status =
   , statusSensitiveLink :: Maybe Bool
   , statusUser          :: User
   } deriving (Show, Eq)
-
-{-
-
-{
-"created_at":"Fri Jul 12 18:51:34 +0000 2013",
-"id":355761366654660608,"id_str":"355761366654660608",
-"text":"RT @TheComedyJokes: According to Astronomy, when you wish upon a star, you're actually a few million years too late. That star is dead. Jus\u2026",
-"source":"\u003ca href=\"http:\/\/twitter.com\/download\/android\" rel=\"nofollow\"\u003eTwitter for Android\u003c\/a\u003e",
-"truncated":false,
-"in_reply_to_status_id":null,
-"in_reply_to_status_id_str":null,
-"in_reply_to_user_id":null,
-"in_reply_to_user_id_str":null,
-"in_reply_to_screen_name":null,
-"user":{
-  "id":427074862,
-  "id_str":"427074862",
-  "name":"Anna Graham \u2730",
-  "screen_name":"anagram23",
-  "location":"",
-  "url":null,
-  "description":"AnnaCarroll. 20 years young. Parker \u2661. I love to laugh and have a good time. Follow me. \u270c",
-  "protected":false,
-  "followers_count":558,
-  "friends_count":516,
-  "listed_count":0,
-  "created_at":"Sat Dec 03 02:33:36 +0000 2011",
-  "favourites_count":343,
-  "utc_offset":null,
-  "time_zone":null,
-  "geo_enabled":false,
-  "verified":false,
-  "statuses_count":3202,
-  "lang":"en",
-  "contributors_enabled":false,
-  "is_translator":false,
-  "profile_background_color":"BD1CD6",
-  "profile_background_image_url":"http:\/\/a0.twimg.com\/images\/themes\/theme10\/bg.gif",
-  "profile_background_image_url_https":"https:\/\/si0.twimg.com\/images\/themes\/theme10\/bg.gif",
-  "profile_background_tile":true,
-  "profile_image_url":"http:\/\/a0.twimg.com\/profile_images\/3738122103\/1c778f19083dca22c359980429fbfd5d_normal.jpeg",
-  "profile_image_url_https":"https:\/\/si0.twimg.com\/profile_images\/3738122103\/1c778f19083dca22c359980429fbfd5d_normal.jpeg",
-  "profile_banner_url":"https:\/\/pbs.twimg.com\/profile_banners\/427074862\/1348027745",
-  "profile_link_color":"FF0000",
-  "profile_sidebar_border_color":"65B0DA",
-  "profile_sidebar_fill_color":"7AC3EE",
-  "profile_text_color":"3D1957",
-  "profile_use_background_image":true,
-  "default_profile":false,
-  "default_profile_image":false,
-  "following":null,
-  "follow_request_sent":null,
-  "notifications":null
-},
-"geo":null,
-"coordinates":null,
-"place":null,
-"contributors":null,
-"retweeted_status":{
-  "created_at":"Fri Jul 12 18:00:17 +0000 2013",
-  "id":355748460865134596,
-  "id_str":"355748460865134596",
-  "text":"According to Astronomy, when you wish upon a star, you're actually a few million years too late. That star is dead. Just like your dreams.",
-  "source":"\u003ca href=\"http:\/\/bufferapp.com\" rel=\"nofollow\"\u003eBuffer\u003c\/a\u003e",
-  "truncated":false,
-  "in_reply_to_status_id":null,
-  "in_reply_to_status_id_str":null,
-  "in_reply_to_user_id":null,
-  "in_reply_to_user_id_str":null,
-  "in_reply_to_screen_name":null,
-  "user":{
-    "id":269661382,
-    "id_str":"269661382",
-    "name":"Comedy Tweets",
-    "screen_name":"TheComedyJokes",
-    "location":"Get a Retweet on this account!",
-    "url":"http:\/\/TweetPeddler.com\/thecomedyjokes",
-    "description":"Tweeting quotes, jokes, advice, & facts that relate to your everyday life. ( TwitAdvertising@yahoo.com )",
-    "protected":false,
-    "followers_count":1325645,
-    "friends_count":82,
-    "listed_count":3748,
-    "created_at":"Mon Mar 21 06:43:12 +0000 2011",
-    "favourites_count":1017,
-    "utc_offset":-18000,
-    "time_zone":"Eastern Time (US & Canada)",
-    "geo_enabled":false,
-    "verified":false,
-    "statuses_count":28192,
-    "lang":"en",
-    "contributors_enabled":false,
-    "is_translator":false,
-    "profile_background_color":"709397",
-    "profile_background_image_url":"http:\/\/a0.twimg.com\/profile_background_images\/552746752\/gray_sand.png",
-    "profile_background_image_url_https":"https:\/\/si0.twimg.com\/profile_background_images\/552746752\/gray_sand.png",
-    "profile_background_tile":true,
-    "profile_image_url":"http:\/\/a0.twimg.com\/profile_images\/2187551242\/dancepeter__1__normal.gif",
-    "profile_image_url_https":"https:\/\/si0.twimg.com\/profile_images\/2187551242\/dancepeter__1__normal.gif",
-    "profile_banner_url":"https:\/\/pbs.twimg.com\/profile_banners\/269661382\/1348002051",
-    "profile_link_color":"FF3300",
-    "profile_sidebar_border_color":"FFFFFF",
-    "profile_sidebar_fill_color":"A0C5C7",
-    "profile_text_color":"333333",
-    "profile_use_background_image":true,
-    "default_profile":false,
-    "default_profile_image":false,
-    "following":null,
-    "follow_request_sent":null,
-    "notifications":null
-  },
-  "geo":null,
-  "coordinates":null,
-  "place":null,
-  "contributors":null,
-  "retweet_count":194,
-  "favorite_count":77,
-  "entities":{"hashtags":[],"symbols":[],"urls":[],"user_mentions":[]},
-  "favorited":false,
-  "retweeted":false,
-  "lang":"en"
-}
-"retweet_count":0,
-"favorite_count":0,
-"entities":{"hashtags":[],"symbols":[],"urls":[],"user_mentions":[{"screen_name":"TheComedyJokes","name":"Comedy Tweets","id":269661382,"id_str":"269661382","indices":[3,18]}]},
-"favorited":false,
-"retweeted":false,
-"filter_level":"medium",
-"lang":"en"}
-
--}
 
 instance FromJSON Status where
   parseJSON (Object o) = checkError o >>
@@ -357,7 +229,7 @@ instance FromJSON FilterLevel where
     "low" -> return FLLow
     "medium" -> return FLMedium
     "high" -> return FLHigh
-    _ -> mzero
+    _ -> fail ("Expected none/low/medium/high, not '" ++ unpack t ++ "'") -- TODO: was mzero
   parseJSON _ = mzero
 
 data EventType = Favorite | Unfavorite
@@ -446,7 +318,7 @@ instance FromJSON User where
          <*> o .:? "created_at"
          <*> o .:  "verified"
          <*> o .:  "contributors_enabled"
-         <*> o .:  "get_enabled"
+         <*> o .:  "geo_enabled"
          <*> o .:? "utc_offset"
          <*> o .:? "time_zone"
   parseJSON _ = mzero
@@ -530,8 +402,9 @@ instance FromJSON MediaSize where
               <*> o .: "resize"
   parseJSON _ = mzero
 
-data MediaTag = MTThumb | MTLarge | MTMedium | MTSmall
-                                               deriving (Show, Eq)
+{-
+data MediaTag = MTThumb | MTSmall | MTMedium | MTLarge
+                                               deriving (Show, Eq, Ord)
 
 instance FromJSON MediaTag where
   parseJSON (String s) = case s of
@@ -539,8 +412,10 @@ instance FromJSON MediaTag where
     "large" -> return MTLarge
     "medium" -> return MTMedium
     "small" -> return MTSmall
-    _ -> mzero
+    _ -> fail ("Expected thumb/large/medium/small, not '" ++ unpack s ++ "'") -- TODO: was mzero
+    
   parseJSON _ = mzero
+-}
 
 data MediaEntity =
   MediaEntity
@@ -550,7 +425,8 @@ data MediaEntity =
   , meExpandedURL :: URIString -- ^ Corresponds to expanded_url
   , meDisplayURL :: Text -- ^ shortened form of the expanded URL (corresponds to display_url)
   , meTweetText :: Text -- ^ text used in the actual tweet (corresponds to url)
-  , msSizes :: [(MediaTag, MediaSize)] 
+  , msSizes :: M.Map Text MediaSize
+  -- , msSizes :: M.Map MediaTag MediaSize
   } deriving (Show, Eq)
 
 instance FromJSON MediaEntity where
@@ -563,7 +439,7 @@ instance FromJSON MediaEntity where
                 <*> o .: "url"
                 <*> o .: "sizes"
   parseJSON _ = mzero
-  
+
 -- | Entity handling.
 data Entities =
   Entities
@@ -580,7 +456,7 @@ instance FromJSON Entities where
              <*> o .:  "user_mentions"
              <*> o .:  "urls"
              <*> o .:  "symbols"
-             <*> o .:  "media"
+             <*> o .:? "media" .!= []
   parseJSON _ = mzero
 
 -- | The character positions the Entity was extracted from
