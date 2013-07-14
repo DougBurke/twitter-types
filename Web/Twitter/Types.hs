@@ -30,6 +30,7 @@ module Web.Twitter.Types
        , SymbolEntity(..)
        , MediaEntity(..)
        , MediaSize(..)
+       , MediaSizes(..)
        -- , MediaTag(..)
        , checkError
        )
@@ -91,7 +92,7 @@ data Status =
   , statusText          :: Text
   , statusSource        :: Text
   , statusLanguage      :: LanguageCode
-  , statusFilterLevel   :: FilterLevel
+  , statusFilterLevel   :: Maybe FilterLevel
   , statusTruncated     :: Bool
   , statusEntities      :: Maybe Entities
   , statusInReplyTo     :: Maybe StatusId
@@ -110,7 +111,7 @@ instance FromJSON Status where
            <*> o .:  "text"
            <*> o .:  "source"
            <*> o .:  "lang"
-           <*> o .:  "filter_level"
+           <*> o .:? "filter_level"
            <*> o .:  "truncated"
            <*> o .:? "entities"
            <*> o .:? "in_reply_to_status_id"
@@ -174,6 +175,7 @@ data RetweetedStatus =
   , rsText            :: Text
   , rsSource          :: Text
   , rsLanguage        :: LanguageCode
+  , rsFilterLevel     :: Maybe FilterLevel
   , rsTruncated       :: Bool
   , rsEntities        :: Maybe Entities
   , rsUser            :: User
@@ -187,6 +189,7 @@ instance FromJSON RetweetedStatus where
                     <*> o .:  "text"
                     <*> o .:  "source"
                     <*> o .:  "lang"
+                    <*> o .:? "filter_level"
                     <*> o .:  "truncated"
                     <*> o .:? "entities"
                     <*> o .:  "user"
@@ -279,6 +282,9 @@ instance FromJSON Delete where
            <*> s .: "user_id"
   parseJSON _ = mzero
 
+-- | The User structure is also used in the UserEntity entry,
+--   so most fields have to be optional (probably a bad design
+--   choice).
 data User =
   User
   { userId              :: UserId
@@ -294,9 +300,9 @@ data User =
   , userTweets          :: Maybe Int
   , userLangCode        :: Maybe LanguageCode
   , userCreatedAt       :: Maybe DateString
-  , userVerified        :: Bool
-  , userHasContributors :: Bool
-  , userGeoEnabled      :: Bool
+  , userVerified        :: Maybe Bool
+  , userHasContributors :: Maybe Bool
+  , userGeoEnabled      :: Maybe Bool
   , userUTCOffset       :: Maybe Int
   , userTimeZone        :: Maybe Text
   } deriving (Show, Eq)
@@ -316,9 +322,9 @@ instance FromJSON User where
          <*> o .:? "statuses_count"
          <*> o .:? "lang"
          <*> o .:? "created_at"
-         <*> o .:  "verified"
-         <*> o .:  "contributors_enabled"
-         <*> o .:  "geo_enabled"
+         <*> o .:? "verified"
+         <*> o .:? "contributors_enabled"
+         <*> o .:? "geo_enabled"
          <*> o .:? "utc_offset"
          <*> o .:? "time_zone"
   parseJSON _ = mzero
@@ -402,7 +408,6 @@ instance FromJSON MediaSize where
               <*> o .: "resize"
   parseJSON _ = mzero
 
-{-
 data MediaTag = MTThumb | MTSmall | MTMedium | MTLarge
                                                deriving (Show, Eq, Ord)
 
@@ -415,7 +420,6 @@ instance FromJSON MediaTag where
     _ -> fail ("Expected thumb/large/medium/small, not '" ++ unpack s ++ "'") -- TODO: was mzero
     
   parseJSON _ = mzero
--}
 
 data MediaEntity =
   MediaEntity
@@ -425,8 +429,7 @@ data MediaEntity =
   , meExpandedURL :: URIString -- ^ Corresponds to expanded_url
   , meDisplayURL :: Text -- ^ shortened form of the expanded URL (corresponds to display_url)
   , meTweetText :: Text -- ^ text used in the actual tweet (corresponds to url)
-  , msSizes :: M.Map Text MediaSize
-  -- , msSizes :: M.Map MediaTag MediaSize
+  , msSizes :: MediaSizes
   } deriving (Show, Eq)
 
 instance FromJSON MediaEntity where
@@ -440,6 +443,33 @@ instance FromJSON MediaEntity where
                 <*> o .: "sizes"
   parseJSON _ = mzero
 
+-- TODO: can any size be optional?
+-- TODO: a better name than MediaSizes given that we have MediaSize
+data MediaSizes =
+  MediaSizes
+  { msThumb :: MediaSize
+  , msSmall :: MediaSize
+  , msMedium :: MediaSize
+  , msLarge :: MediaSize
+  } deriving (Show, Eq)
+
+             
+instance FromJSON MediaSizes where
+  parseJSON v@(Object _) =
+    let pMap :: Parser (M.Map Text MediaSize)
+        pMap = parseJSON v
+
+        conv mp = do
+          t <- M.lookup "thumb" mp
+          s <- M.lookup "small" mp
+          m <- M.lookup "medium" mp
+          l <- M.lookup "large" mp
+          return $ MediaSizes t s m l
+          
+    in pMap >>= maybe mzero return . conv
+
+  parseJSON _ = mzero
+  
 -- | Entity handling.
 data Entities =
   Entities
