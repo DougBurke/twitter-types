@@ -314,7 +314,7 @@ instance FromJSON User where
          <*> o .:  "screen_name"
          <*> o .:? "description"
          <*> o .:? "location"
-         <*> o .:? "profile_image_url"
+         <*> o .:? "profile_image_url"  -- TODO: should also support profile_image_url_https
          <*> o .:? "url"
          <*> o .:? "protected"
          <*> o .:? "followers_count"
@@ -485,7 +485,7 @@ instance FromJSON Entities where
     Entities <$> o .:  "hashtags"
              <*> o .:  "user_mentions"
              <*> o .:  "urls"
-             <*> o .:  "symbols"
+             <*> o .:? "symbols" .!= []
              <*> o .:? "media" .!= []
   parseJSON _ = mzero
 
