@@ -1,5 +1,5 @@
 name:              twitter-types
-version:           0.2.1
+version:           0.3.0
 license:           BSD3
 license-file:      LICENSE
 author:            Takahiro HIMURA
@@ -34,18 +34,20 @@ test-suite tests
   type:              exitcode-stdio-1.0
   hs-source-dirs:    tests, .
   main-is:           TypesTest.hs
+  other-modules:     Fixtures
   build-depends:
-      base >= 4.0 && < 5
+    aeson
+    , attoparsec
+    , base
+    , bytestring
+    , containers
+    , HUnit
+    , shakespeare-text
     , template-haskell
     , test-framework >= 0.3.3 && < 0.7
     , test-framework-th-prime
     , test-framework-hunit
-    , HUnit
-    , shakespeare-text
-    , http-types
-    , aeson
-    , attoparsec
-    , bytestring
     , text
+    , twitter-types
 
   ghc-options:       -Wall

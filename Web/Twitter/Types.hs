@@ -1,4 +1,4 @@
-{-# LANGUAGE OverloadedStrings, DeriveDataTypeable #-}
+{-# LANGUAGE OverloadedStrings #-}
 
 -- TODO: check against https://dev.twitter.com/docs/platform-objects
 
@@ -32,6 +32,18 @@ module Web.Twitter.Types
        , MediaSize(..)
        , MediaSizes(..)
        -- , MediaTag(..)
+         
+         -- * Coordinate Handling
+         --
+         -- For now there are separate types for points and polygons, since
+         -- they seem to be used for the coordinates/geo and places:bounding_box
+         -- fields of a status. It might make sense to have a single Shape type,
+         -- but for now keep things separate.
+       , Point(..)
+       , Polygon(..)
+       , Place(..)
+       , PlaceId
+       , PlaceType(..)
        , checkError
        )
        where
@@ -102,6 +114,8 @@ data Status =
   , statusRetweetCount  :: Maybe Integer
   , statusSensitiveLink :: Maybe Bool
   , statusUser          :: User
+  , statusPosition      :: Maybe Point
+  , statusPlace         :: Maybe Place
   } deriving (Show, Eq)
 
 instance FromJSON Status where
@@ -121,6 +135,8 @@ instance FromJSON Status where
            <*> o .:? "retweet_count"
            <*> o .:? "possibly_sensitive"
            <*> o .:  "user"
+           <*> o .:? "coordinates"
+           <*> o .:? "place"
   parseJSON _ = mzero
 
 data SearchResult body =
@@ -179,6 +195,8 @@ data RetweetedStatus =
   , rsTruncated       :: Bool
   , rsEntities        :: Maybe Entities
   , rsUser            :: User
+  , rsPosition        :: Maybe Point
+  , rsPlace           :: Maybe Place
   , rsRetweetedStatus :: Status
   } deriving (Show, Eq)
 
@@ -193,6 +211,8 @@ instance FromJSON RetweetedStatus where
                     <*> o .:  "truncated"
                     <*> o .:? "entities"
                     <*> o .:  "user"
+                    <*> o .:? "coordinates"
+                    <*> o .:? "place"
                     <*> o .:  "retweeted_status"
   parseJSON _ = mzero
 
@@ -506,3 +526,88 @@ instance FromJSON a => FromJSON (Entity a) where
     Entity <$> parseJSON v
            <*> o .: "indices"
   parseJSON _ = mzero
+
+-- | The coordinates are taken from the @coordinate@ rather than @geo@
+--   field.
+
+data Point = Point
+             { ptLon :: Double
+             , ptLat :: Double
+             } deriving (Show, Eq)
+
+instance FromJSON Point where 
+  parseJSON (Object o) = do
+    checkError o
+    ctype <- o .: "type"
+    if ctype == "Point"
+      then uncurry Point <$> o .: "coordinates"
+      else fail $ "Expected type=Point, not '" ++ ctype ++ "'"
+
+  parseJSON _ = mzero
+
+-- | Bounding boxes are assumed to be polygons.
+  
+data Polygon = Polygon
+               { plCoords :: [(Double, Double)] -- ^ (longitude,latitude) pairs
+               } deriving (Show, Eq)
+
+instance FromJSON Polygon where 
+  parseJSON (Object o) = 
+    checkError o >> do
+    ctype <- o .: "type"
+    if ctype == "Polygon"
+      then Polygon . head <$> o .: "coordinates"
+      else fail $ "Expected type=Polygon, not '" ++ ctype ++ "'"
+    
+  parseJSON _ = mzero
+
+-- | Unlike other ids used by Twitter, which are integers,
+--   this is string (no attempt is made to decode the value).
+type PlaceId      = Text
+
+data PlaceType =
+  PTPOI      -- ^ point of interest
+  | PTCity   -- ^ city
+  | PTOther Text
+    deriving (Eq, Show)
+
+instance FromJSON PlaceType where
+  parseJSON (String pt) = case pt of
+    "poi"   -> return PTPOI
+    "city"  -> return PTCity
+    _       -> return $ PTOther pt
+
+  parseJSON _ = mzero
+  
+-- | Some of the information stored in the place field. This is currently
+--   geared towards the information returned with a status, rather than
+--   an explicit \"place\" query.
+
+data Place =
+  Place
+  { plId :: PlaceId        -- ^ the id of the place
+  , plURI :: URIString     -- ^ Twitter URI for the place
+  , plName :: Text         -- ^ the \"name\" field
+  , plFullName :: Text     -- ^ the \"full_name" field
+  , plType :: PlaceType    -- ^ the \"place_type\" field
+  , plCountry :: Text      -- ^ the \"country\" field
+  , plCountryCode :: Text  -- ^ the \"country_code\" field
+  , plBBox :: Polygon      -- ^ the bounding box for the location
+  , plAttributes :: M.Map Text Text
+  } deriving (Eq, Show)
+
+instance FromJSON Place where
+  parseJSON (Object o) =
+    checkError o >>
+    Place <$> o .: "id"
+          <*> o .: "url"
+          <*> o .: "name"
+          <*> o .: "full_name"
+          <*> o .: "place_type"
+          <*> o .: "country"
+          <*> o .: "country_code"
+          <*> o .: "bounding_box"
+          <*> o .: "attributes"
+
+  parseJSON _ = mzero
+  

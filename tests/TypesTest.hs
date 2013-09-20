@@ -38,7 +38,7 @@ case_parseStatusIncludeEntities = withJSON statusEntityJson $ \obj -> do
   statusId obj @?= 112652479837110273
   statusRetweetCount obj @?= Just 0
   (userScreenName . statusUser) obj @?= "imeoin"
-  let ent = fromMaybe (Entities [] [] []) $ statusEntities obj
+  let ent = fromMaybe (Entities [] [] [] [] []) $ statusEntities obj
   (map entityIndices . enHashTags) ent @?= [[32,42]]
   (hashTagText . entityBody . head . enHashTags) ent @?= "tcdisrupt"
 
