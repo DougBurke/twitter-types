@@ -24,6 +24,7 @@ module Web.Twitter.Types
        , List(..)
        , Entities(..)
        , Entity(..)
+       , EntityIndices
        , HashTagEntity(..)
        , UserEntity(..)
        , URLEntity(..)
@@ -64,7 +65,7 @@ type URIString    = ByteString
 type UserName     = Text
 type StatusId     = Integer
 
--- | Looks like Twitter are using BCP47 - http://tools.ietf.org/html/bcp47 - but
+-- | Looks like Twitter are using BCP47 - <http://tools.ietf.org/html/bcp47> - but
 --   a present too lazy to wrap this up into a type.
 type LanguageCode = Text
 
@@ -242,7 +243,7 @@ instance FromJSON DirectMessage where
                   <*> o .:  "sender_id"
   parseJSON _ = mzero
 
--- | From https://dev.twitter.com/blog/introducing-new-metadata-for-tweets
+-- | From <https://dev.twitter.com/blog/introducing-new-metadata-for-tweets>.
 data FilterLevel = FLNone | FLLow | FLMedium | FLHigh
                                        deriving (Show, Eq)
 
@@ -302,7 +303,7 @@ instance FromJSON Delete where
            <*> s .: "user_id"
   parseJSON _ = mzero
 
--- | The User structure is also used in the UserEntity entry,
+-- | The @User@ structure is also used in the `UserEntity` entry,
 --   so most fields have to be optional (probably a bad design
 --   choice).
 data User =
@@ -588,7 +589,7 @@ data Place =
   { plId :: PlaceId        -- ^ the id of the place
   , plURI :: URIString     -- ^ Twitter URI for the place
   , plName :: Text         -- ^ the \"name\" field
-  , plFullName :: Text     -- ^ the \"full_name" field
+  , plFullName :: Text     -- ^ the \"full_name\" field
   , plType :: PlaceType    -- ^ the \"place_type\" field
   , plCountry :: Text      -- ^ the \"country\" field
   , plCountryCode :: Text  -- ^ the \"country_code\" field
