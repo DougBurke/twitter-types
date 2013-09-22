@@ -566,16 +566,31 @@ instance FromJSON Polygon where
 --   this is string (no attempt is made to decode the value).
 type PlaceId      = Text
 
+-- | Represent the \"type\" of a place.
 data PlaceType =
-  PTPOI      -- ^ point of interest
-  | PTCity   -- ^ city
+  PTAdmin    -- ^ administrative area
+  | PTCity     -- ^ city
+  | PTCountry      -- ^ country
+  | PTNeighborhood -- ^ a neighborhood
+  | PTPOI      -- ^ point of interest
   | PTOther Text
-    deriving (Eq, Show)
+    deriving Eq
+
+instance Show PlaceType where
+  show PTAdmin        = "admin"
+  show PTCity         = "city"
+  show PTCountry      = "country"
+  show PTNeighborhood = "neighborhood"
+  show PTPOI          = "poi"
+  show (PTOther t)    = unpack t
 
 instance FromJSON PlaceType where
   parseJSON (String pt) = case pt of
-    "poi"   -> return PTPOI
+    "admin" -> return PTAdmin
     "city"  -> return PTCity
+    "country" ->return PTCountry
+    "neighborhood" -> return PTNeighborhood
+    "poi"   -> return PTPOI
     _       -> return $ PTOther pt
 
   parseJSON _ = mzero
@@ -583,7 +598,9 @@ instance FromJSON PlaceType where
 -- | Some of the information stored in the place field. This is currently
 --   geared towards the information returned with a status, rather than
 --   an explicit \"place\" query.
-
+-- 
+--   TODO: do these fields need to be made optional (i.e. what is the
+--   minimal set of fields returned by Twitter)?
 data Place =
   Place
   { plId :: PlaceId        -- ^ the id of the place
