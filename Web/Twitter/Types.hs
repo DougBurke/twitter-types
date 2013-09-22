@@ -599,8 +599,6 @@ instance FromJSON PlaceType where
 --   geared towards the information returned with a status, rather than
 --   an explicit \"place\" query.
 -- 
---   TODO: do these fields need to be made optional (i.e. what is the
---   minimal set of fields returned by Twitter)?
 data Place =
   Place
   { plId :: PlaceId        -- ^ the id of the place
@@ -610,22 +608,22 @@ data Place =
   , plType :: PlaceType    -- ^ the \"place_type\" field
   , plCountry :: Text      -- ^ the \"country\" field
   , plCountryCode :: Text  -- ^ the \"country_code\" field
-  , plBBox :: Polygon      -- ^ the bounding box for the location
-  , plAttributes :: M.Map Text Text
+  , plBBox :: Maybe Polygon      -- ^ the bounding box for the location
+  , plAttributes :: M.Map Text Text -- ^ key,value pairs for the attributes
   } deriving (Eq, Show)
 
 instance FromJSON Place where
   parseJSON (Object o) =
     checkError o >>
-    Place <$> o .: "id"
-          <*> o .: "url"
-          <*> o .: "name"
-          <*> o .: "full_name"
-          <*> o .: "place_type"
-          <*> o .: "country"
-          <*> o .: "country_code"
-          <*> o .: "bounding_box"
-          <*> o .: "attributes"
+    Place <$> o .:  "id"
+          <*> o .:  "url"
+          <*> o .:  "name"
+          <*> o .:  "full_name"
+          <*> o .:  "place_type"
+          <*> o .:  "country"
+          <*> o .:  "country_code"
+          <*> o .:? "bounding_box"
+          <*> o .:  "attributes"
 
   parseJSON _ = mzero
   
