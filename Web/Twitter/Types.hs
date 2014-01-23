@@ -54,14 +54,13 @@ import qualified Data.Map as M
 import Data.Aeson
 import Data.Aeson.Types (Parser)
 import Data.Text (Text, unpack)
-import Data.ByteString (ByteString)
 import Control.Applicative
 import Control.Monad
 
 type DateString   = Text
 type UserId       = Integer
 type Friends      = [UserId]
-type URIString    = ByteString
+type URIString    = Text
 type UserName     = Text
 type StatusId     = Integer
 
