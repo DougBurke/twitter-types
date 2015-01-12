@@ -42,6 +42,7 @@ test-suite tests
     , bytestring
     , containers
     , HUnit
+    , shakespeare
     , shakespeare-text
     , template-haskell
     , test-framework >= 0.3.3 && < 0.9
